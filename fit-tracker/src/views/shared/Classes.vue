@@ -18,8 +18,8 @@
       <ClassCard
           v-for="gymClass in classes.content"
           :key="gymClass.id"
-          :gymClass="gymClass"
-          @view-details="viewClassDetails(gymClass.id)"
+          :classItem="gymClass"
+      @view-details="viewClassDetails(gymClass.id)"
       />
     </div>
     <!-- Pagination -->

@@ -19,6 +19,7 @@
 
 <script>
 import ProductService from '@/services/products.js';
+import CartService from '@/services/cart.js';
 
 export default {
   data() {
@@ -36,9 +37,9 @@ export default {
     }
   },
   methods: {
-    addToCart() {
+    async addToCart() {
       try {
-        this.$store.dispatch('addToCart', { product: this.product, quantity: 1 });
+        await CartService.addToCart(this.product.id, 1);
         this.$toast.success('Added to cart');
       } catch (error) {
         this.$toast.error('Failed to add to cart');

@@ -144,8 +144,8 @@ export default {
     },
     minDateTime() {
       const now = new Date();
-      now.setMinutes(now.getMinutes() + 1);
-      return now.toISOString().slice(0, 16);
+      now.setMinutes(now.getMinutes() + 1); // Allow times slightly in the future
+      return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
     },
     hasErrors() {
       return Object.values(this.errors).some(error => error !== '');
@@ -226,6 +226,7 @@ export default {
       }
 
       try {
+        // Format dates to ISO 8601 for backend compatibility
         const payload = {
           ...this.form,
           startTime: new Date(this.form.startTime).toISOString(),
@@ -243,7 +244,7 @@ export default {
         }
         this.resetForm();
       } catch (error) {
-        const errorMessage = error.message || 'Failed to save class';
+        const errorMessage = error.response?.data?.message || error.response?.data?.startTime || 'Failed to save class';
         this.$toast.error(errorMessage);
       }
     },
@@ -283,6 +284,7 @@ export default {
     if (this.classData) {
       this.form = {
         ...this.classData,
+        // Convert ISO dates to datetime-local format (YYYY-MM-DDTHH:mm)
         startTime: this.classData.startTime ? new Date(this.classData.startTime).toISOString().slice(0, 16) : '',
         endTime: this.classData.endTime ? new Date(this.classData.endTime).toISOString().slice(0, 16) : '',
       };
