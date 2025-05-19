@@ -1,24 +1,34 @@
-import axios from './axios.js';
+import axios from './axios';
 
 const WorkoutService = {
-    async searchWorkouts(keyword, page = 0, size = 10) {
-        return axios.get(`/workouts?keyword=${keyword}&page=${page}&size=${size}`);
+    search({ keyword = '', page = 0, size = 10 } = {}) {
+        return axios.get('/workouts/search', { params: { keyword, page, size } })
+            .then(res => res.data);
     },
-    async getById(id) {
-        return axios.get(`/workouts/${id}`);
+
+    getById(workoutId) {
+        return axios.get(`/workouts/${workoutId}`)
+            .then(res => res.data);
     },
-    async getAll(page = 0, size = 10) {
-        return axios.get(`/workouts?page=${page}&size=${size}`);
+
+    getByCoach(coachId, { page = 0, size = 10 } = {}) {
+        return axios.get(`/workouts/by-coach/${coachId}`, { params: { page, size } })
+            .then(res => res.data);
     },
-    async create(workout) {
-        return axios.post('/workouts', workout);
+
+    create(workoutPayload) {
+        return axios.post('/workouts', workoutPayload)
+            .then(res => res.data);
     },
-    async update(id, workout) {
-        return axios.put(`/workouts/${id}`, workout);
+
+    update(workoutId, workoutPayload) {
+        return axios.put(`/workouts/${workoutId}`, workoutPayload)
+            .then(res => res.data);
     },
-    async delete(id) {
-        return axios.delete(`/workouts/${id}`);
-    },
+
+    delete(workoutId) {
+        return axios.delete(`/workouts/${workoutId}`);
+    }
 };
 
 export default WorkoutService;

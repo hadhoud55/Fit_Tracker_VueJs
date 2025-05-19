@@ -1,41 +1,34 @@
 <template>
-  <div v-if="classItem" class="bg-white p-6 rounded shadow-md">
-    <h2 class="text-xl font-semibold text-primary">{{ classItem.title }}</h2>
-    <p class="text-gray-600">{{ classItem.category || 'No category' }}</p>
-    <p><strong>Coach:</strong> {{ classItem.coachName || 'N/A' }}</p>
-    <p><strong>Start Time:</strong> {{ formatDate(classItem.startTime) }}</p>
-    <p><strong>Duration:</strong> {{ classItem.duration }} minutes</p>
-    <div v-if="classItem.imageUrls?.length" class="mt-2">
-      <img
-          :src="classItem.imageUrls[0]"
-          alt="Class Image"
-          class="w-full h-48 object-cover rounded"
-      />
+  <div class="border rounded-lg p-4 shadow hover:shadow-lg transition">
+    <h3 class="text-lg font-semibold">{{ gymClass.name }}</h3>
+    <p class="text-gray-600">{{ gymClass.schedule }}</p>
+    <div class="mt-4 flex justify-between">
+      <router-link
+          :to="{ name:'ClassDetail', params:{ id:gymClass.id }}"
+          class="text-blue-500 hover:underline"
+      >Details</router-link>
+      <button
+          @click="bookClass"
+          class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+      >Book</button>
     </div>
-    <button
-        @click="$emit('view-details')"
-        class="mt-4 bg-accent text-white py-2 px-4 rounded hover:bg-green-700"
-    >
-      View Details
-    </button>
-  </div>
-  <div v-else class="bg-white p-6 rounded shadow-md text-red-500">
-    Class data not available
   </div>
 </template>
 
 <script>
+import BookingService from '@/services/bookings.js';
 export default {
-  props: {
-    classItem: {
-      type: Object,
-      required: true,
-    },
-  },
+  props: { gymClass: { type:Object, required:true } },
   methods: {
-    formatDate(date) {
-      return date ? new Date(date).toLocaleString() : 'N/A';
-    },
-  },
+    async bookClass() {
+      try {
+        const userId = this.$store.getters.userId;
+        await BookingService.create({ classId:this.gymClass.id, userId });
+        this.$toast.open({ message:'Booked!', type:'success' });
+      } catch {
+        this.$toast.open({ message:'Booking failed', type:'error' });
+      }
+    }
+  }
 };
 </script>

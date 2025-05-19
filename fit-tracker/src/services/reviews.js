@@ -1,21 +1,24 @@
-import axios from './axios.js';
+import axios from './axios';
 
 const ReviewService = {
-    async getAll(page = 0, size = 10) {
-        return axios.get(`/reviews?page=${page}&size=${size}`);
+    getForWorkout(workoutId, { page = 0, size = 10 } = {}) {
+        return axios.get(`/reviews/workout/${workoutId}`, { params: { page, size } })
+            .then(res => res.data);
     },
-    async getByClassId(classId, page = 0, size = 10) {
-        return axios.get(`/reviews/class/${classId}?page=${page}&size=${size}`);
+
+    getForUser(userId, { page = 0, size = 10 } = {}) {
+        return axios.get(`/reviews/user/${userId}`, { params: { page, size } })
+            .then(res => res.data);
     },
-    async create(review) {
-        return axios.post('/reviews', review);
+
+    create(reviewPayload) {
+        return axios.post('/reviews', reviewPayload)
+            .then(res => res.data);
     },
-    async update(id, review) {
-        return axios.put(`/reviews/${id}`, review);
-    },
-    async delete(id) {
-        return axios.delete(`/reviews/${id}`);
-    },
+
+    delete(reviewId) {
+        return axios.delete(`/reviews/${reviewId}`);
+    }
 };
 
 export default ReviewService;

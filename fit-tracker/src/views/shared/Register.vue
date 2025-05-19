@@ -24,7 +24,6 @@
 
 <script>
 import AuthService from '@/services/auth.js';
-import { mapActions } from 'vuex';
 
 export default {
   data() {
@@ -37,19 +36,15 @@ export default {
     };
   },
   methods: {
-    ...mapActions(['login']),
     async submit() {
       try {
         await AuthService.register(this.form);
-        this.$toast.success('Registration successful');
-        // Auto-login after registration
-        await this.login({ username: this.form.username, password: this.form.password });
-        this.$router.push('/');
+        this.$toast.success('Registration successful! Please login.');
+        this.$router.push('/login');
       } catch (error) {
-        const message = error.response?.data?.message || 'Registration or login failed';
-        this.$toast.error(message);
+        this.$toast.error(error.message);
       }
-    },
+    }
   },
 };
 </script>

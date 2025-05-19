@@ -8,11 +8,23 @@ import 'vue-toastification/dist/index.css';
 
 Vue.config.productionTip = false;
 
-Vue.use(Toast, {
+const toastOptions = {
   transition: 'Vue-Toastification__bounce',
   maxToasts: 20,
   newestOnTop: true,
-});
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnFocusLoss: true,
+  pauseOnHover: true,
+  draggable: true,
+  draggablePercent: 0.6,
+  showCloseButtonOnHover: false,
+  hideProgressBar: true,
+  closeButton: 'button',
+  icon: true
+};
+
+Vue.use(Toast, toastOptions);
 
 new Vue({
   router,

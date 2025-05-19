@@ -1,24 +1,34 @@
-import axios from './axios.js';
+import axios from './axios';
 
 const OrderService = {
-    async getAll(page = 0, size = 10) {
-        return axios.get(`/orders?page=${page}&size=${size}`);
+    getAll({ page = 0, size = 10 } = {}) {
+        return axios.get('/orders', { params: { page, size } })
+            .then(res => res.data);
     },
-    async getById(id) {
-        return axios.get(`/orders/${id}`);
+
+    getById(orderId) {
+        return axios.get(`/orders/${orderId}`)
+            .then(res => res.data);
     },
-    async getByUserId(userId, page = 0, size = 10) {
-        return axios.get(`/orders/user/${userId}?page=${page}&size=${size}`);
+
+    getByUser(userId, { page = 0, size = 10 } = {}) {
+        return axios.get(`/orders/user/${userId}`, { params: { page, size } })
+            .then(res => res.data);
     },
-    async create(order) {
-        return axios.post('/orders', order);
+
+    create(orderPayload) {
+        return axios.post('/orders', orderPayload)
+            .then(res => res.data);
     },
-    async update(id, order) {
-        return axios.put(`/orders/${id}`, order);
+
+    update(orderId, orderPayload) {
+        return axios.put(`/orders/${orderId}`, orderPayload)
+            .then(res => res.data);
     },
-    async delete(id) {
-        return axios.delete(`/orders/${id}`);
-    },
+
+    delete(orderId) {
+        return axios.delete(`/orders/${orderId}`);
+    }
 };
 
 export default OrderService;
