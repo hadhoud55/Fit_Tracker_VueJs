@@ -8,7 +8,7 @@
       </div>
       <div class="mb-4">
         <label for="password" class="block text-gray-700">Password</label>
-        <input v-model="form.password" type="password" id="password" class="w-full p-2 border rounded" chimney />
+        <input v-model="form.password" type="password" id="password" class="w-full p-2 border rounded" required />
       </div>
       <button type="submit" class="w-full bg-accent text-white py-2 rounded hover:bg-green-700">Login</button>
     </form>
@@ -19,8 +19,6 @@
 </template>
 
 <script>
-import AuthService from '@/services/auth.js';
-
 export default {
   data() {
     return {
@@ -35,12 +33,23 @@ export default {
       try {
         await this.$store.dispatch('login', this.form);
         this.$toast.success('Logged in successfully');
-        const redirect = this.$route.query.redirect || '/';
-        this.$router.push(redirect);
+
+        // Get role from Vuex getters
+        const role = this.$store.getters.userRole;
+
+        // Redirect logic
+        let target = '/';
+        switch(role) {
+          case 'ADMIN': target = '/admin/users'; break;
+          case 'COACH': target = '/coach/dashboard'; break;
+          default: target = '/user/dashboard';
+        }
+
+        this.$router.push(target);
       } catch (error) {
-        this.$toast.error('Login failed: Invalid credentials');
+        this.$toast.error(error.response?.data?.message || 'Login failed');
       }
-    },
+    }
   },
 };
 </script>

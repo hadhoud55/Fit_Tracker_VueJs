@@ -1,108 +1,125 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import AuthService from '@/services/auth.js';
-import { decodeJwt } from '@/utils/jwt-decode.js';
+import AuthService from '@/services/auth';
+import router from '@/router';
+import UserService from "@/services/users";
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
-        token: localStorage.getItem('token') || null,
+        isLoading: false,
         user: JSON.parse(localStorage.getItem('user')) || null,
-        cart: JSON.parse(localStorage.getItem('cart')) || [],
+        cart: JSON.parse(localStorage.getItem('cart')) || []
     },
     getters: {
-        isAuthenticated: state => !!state.token,
-        userRole: state => state.user ? state.user.role : null,
-        userId: state => state.user ? state.user.id : null,
+        currentUser: state => state.user,
+        isAuthenticated: state => !!state.user?.token,
+        userRole: state => state.user?.role,
+        userId: state => state.user?.id,
+        isLoading: state => state.isLoading,
         cartItems: state => state.cart,
-        cartTotal: state => state.cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+        cartTotal: state => state.cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
     },
     mutations: {
-        SET_AUTH(state, { token, user }) {
-            state.token = token;
+
+        SET_LOADING(state, isLoading) {
+            state.isLoading = isLoading;
+        },
+        SET_USER(state, user) {
             state.user = user;
-            localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
         },
         CLEAR_AUTH(state) {
-            state.token = null;
             state.user = null;
-            localStorage.removeItem('token');
             localStorage.removeItem('user');
         },
         ADD_TO_CART(state, { product, quantity }) {
-            const existingItem = state.cart.find(item => item.product.id === product.id);
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                state.cart.push({ product, quantity });
-            }
+            const item = state.cart.find(i => i.product.id === product.id);
+            if (item) item.quantity += quantity;
+            else state.cart.push({ product, quantity });
             localStorage.setItem('cart', JSON.stringify(state.cart));
         },
         UPDATE_CART_ITEM(state, { productId, quantity }) {
-            const item = state.cart.find(item => item.product.id === productId);
-            if (item && quantity > 0) {
-                item.quantity = quantity;
-            } else if (item) {
-                state.cart = state.cart.filter(item => item.product.id !== productId);
-            }
+            state.cart = state.cart
+                .map(i => i.product.id === productId ? { ...i, quantity } : i)
+                .filter(i => i.quantity > 0);
             localStorage.setItem('cart', JSON.stringify(state.cart));
         },
         REMOVE_FROM_CART(state, productId) {
-            state.cart = state.cart.filter(item => item.product.id !== productId);
+            state.cart = state.cart.filter(i => i.product.id !== productId);
             localStorage.setItem('cart', JSON.stringify(state.cart));
         },
         CLEAR_CART(state) {
             state.cart = [];
             localStorage.setItem('cart', JSON.stringify(state.cart));
-        },
+        }
     },
     actions: {
-        async login({ commit }, credentials) {
+        async login({ commit }, creds) {
             try {
-                const response = await AuthService.login(credentials);
-                const { token } = response.data;
-                const user = decodeJwt(token);
-                if (!user) {
-                    throw new Error('Failed to decode JWT token');
-                }
-                commit('SET_AUTH', { token, user });
+                const user = await AuthService.login(creds);
+                commit('SET_USER', user);
                 return user;
             } catch (error) {
-                console.error('Login error:', error.response?.data?.message || error.message);
                 throw error;
             }
         },
-        async logout({ commit }) {
-            commit('CLEAR_AUTH');
+        async fetchUsers({ commit }) {
+            commit('SET_LOADING', true);
+            try {
+                const users = await UserService.getAll();
+                return users;
+            } catch (error) {
+                this.dispatch('showToast', {
+                    message: 'Failed to load users: ' + error.message,
+                    type: 'error'
+                });
+                throw error;
+            } finally {
+                commit('SET_LOADING', false);
+            }
         },
+
         async refreshUser({ commit, state }) {
             try {
-                if (state.token) {
-                    const user = decodeJwt(state.token);
-                    if (!user) {
-                        throw new Error('Failed to decode JWT token');
-                    }
-                    commit('SET_AUTH', { token: state.token, user });
-                }
+                if (!state.user) return;
+                const userData = await UserService.getById(state.user.id);
+                commit('SET_USER', {
+                    ...state.user,
+                    ...userData
+                });
             } catch (error) {
-                console.error('Refresh user error:', error.message);
-                commit('CLEAR_AUTH');
-                throw error;
+                this.dispatch('showToast', {
+                    message: 'Failed to refresh user data',
+                    type: 'error'
+                });
             }
         },
-        addToCart({ commit }, { product, quantity }) {
-            commit('ADD_TO_CART', { product, quantity });
+        logout({ commit }) {
+            AuthService.logout();
+            commit('CLEAR_AUTH');
+            router.push('/login');
         },
-        updateCartItem({ commit }, { productId, quantity }) {
-            commit('UPDATE_CART_ITEM', { productId, quantity });
+        showToast({ commit }, { message, type = 'error', duration = 3000 }) {
+            Vue.$toast(message, {
+                type: type.toLowerCase(),
+                timeout: duration,
+                closeOnClick: true,
+                pauseOnFocusLoss: true,
+                pauseOnHover: true,
+                draggable: true,
+                draggablePercent: 0.6,
+                showCloseButtonOnHover: false,
+                hideProgressBar: true,
+                closeButton: 'button',
+                icon: true,
+                rtl: false
+            });
         },
-        removeFromCart({ commit }, productId) {
-            commit('REMOVE_FROM_CART', productId);
-        },
-        clearCart({ commit }) {
-            commit('CLEAR_CART');
-        },
-    },
+        addToCart({ commit }, payload) { commit('ADD_TO_CART', payload); },
+        updateCartItem({ commit }, payload) { commit('UPDATE_CART_ITEM', payload); },
+        removeFromCart({ commit }, id) { commit('REMOVE_FROM_CART', id); },
+        clearCart({ commit }) { commit('CLEAR_CART'); }
+    }
 });

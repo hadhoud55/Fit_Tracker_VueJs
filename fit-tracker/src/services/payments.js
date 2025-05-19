@@ -1,12 +1,15 @@
-import axios from './axios.js';
+import axios from './axios';
 
 const PaymentService = {
-    async create(payment) {
-        return axios.post('/payments', payment);
+    create(paymentPayload) {
+        return axios.post('/payments', paymentPayload)
+            .then(res => res.data);
     },
-    async getByUserId(userId, page = 0, size = 10) {
-        return axios.get(`/payments/user/${userId}?page=${page}&size=${size}`);
-    },
+
+    getByUser(userId, { page = 0, size = 10 } = {}) {
+        return axios.get(`/payments/user/${userId}`, { params: { page, size } })
+            .then(res => res.data);
+    }
 };
 
 export default PaymentService;

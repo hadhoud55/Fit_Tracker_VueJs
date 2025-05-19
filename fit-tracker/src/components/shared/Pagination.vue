@@ -1,36 +1,32 @@
 <template>
-  <div class="flex justify-center mt-4">
+  <div class="flex justify-center py-4">
     <button
-        v-for="page in pages"
-        :key="page"
-        @click="$emit('page-changed', page - 1)"
-        :class="{
-        'px-4 py-2 mx-1 rounded': true,
-        'bg-accent text-white': page - 1 === currentPage,
-        'bg-gray-200 hover:bg-gray-300': page - 1 !== currentPage,
-      }"
-    >
-      {{ page }}
-    </button>
+        class="px-3 py-1 mx-1 border rounded hover:bg-gray-100"
+        :disabled="currentPage===0"
+        @click="$emit('page-changed', currentPage-1)"
+    >Prev</button>
+
+    <button
+        v-for="n in totalPages"
+        :key="n"
+        class="px-3 py-1 mx-1 rounded"
+        :class="n-1===currentPage ? 'bg-accent text-white' : 'border hover:bg-gray-100'"
+        @click="$emit('page-changed', n-1)"
+    >{{ n }}</button>
+
+    <button
+        class="px-3 py-1 mx-1 border rounded hover:bg-gray-100"
+        :disabled="currentPage>=totalPages-1"
+        @click="$emit('page-changed', currentPage+1)"
+    >Next</button>
   </div>
 </template>
 
 <script>
 export default {
   props: {
-    totalPages: {
-      type: Number,
-      required: true,
-    },
-    currentPage: {
-      type: Number,
-      required: true,
-    },
-  },
-  computed: {
-    pages() {
-      return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-    },
-  },
+    currentPage: { type: Number, required: true },
+    totalPages:  { type: Number, required: true }
+  }
 };
 </script>

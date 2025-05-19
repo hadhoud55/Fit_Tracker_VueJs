@@ -15,44 +15,75 @@
         <router-link to="/classes" class="hover:text-accent">Classes</router-link>
         <router-link to="/workouts" class="hover:text-accent">Workouts</router-link>
 
-        <!-- Authenticated User Links -->
         <template v-if="isAuthenticated">
-          <router-link v-if="isUser" to="/user/dashboard" class="hover:text-accent">Dashboard</router-link>
-          <router-link v-if="isCoach" to="/coach/dashboard" class="hover:text-accent">Coach Dashboard</router-link>
-          <router-link v-if="isAdmin" to="/admin/users" class="hover:text-accent">Admin Dashboard</router-link>
-          <button @click="logout" class="bg-accent hover:bg-green-700 px-4 py-2 rounded">Logout</button>
+          <!-- dynamic dashboard link -->
+          <router-link
+              :to="dashboardRoute"
+              class="hover:text-accent"
+          >
+            {{ dashboardLabel }}
+          </router-link>
+          <button
+              @click="handleLogout"
+              class="bg-accent hover:bg-green-700 px-4 py-2 rounded"
+          >Logout</button>
         </template>
-        <!-- Guest Links -->
+
         <template v-else>
           <router-link to="/login" class="hover:text-accent">Login</router-link>
-          <router-link to="/register" class="bg-accent hover:bg-green-700 px-4 py-2 rounded">Register</router-link>
+          <router-link
+              to="/register"
+              class="bg-accent hover:bg-green-700 px-4 py-2 rounded"
+          >Register</router-link>
         </template>
       </div>
 
-      <!-- Mobile Menu Button -->
-      <button @click="toggleMobileMenu" class="md:hidden focus:outline-none">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16m-7 6h7'" />
+      <!-- Mobile Toggle -->
+      <button @click="mobileOpen = !mobileOpen" class="md:hidden">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor">
+          <path
+              v-if="!mobileOpen"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+          />
+          <path
+              v-else
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
 
     <!-- Mobile Menu -->
-    <div v-if="mobileMenuOpen" class="md:hidden bg-primary py-2">
-      <router-link to="/" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Home</router-link>
-      <router-link to="/memberships" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Memberships</router-link>
-      <router-link to="/products" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Products</router-link>
-      <router-link to="/classes" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Classes</router-link>
-      <router-link to="/workouts" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Workouts</router-link>
+    <div v-if="mobileOpen" class="md:hidden bg-primary">
+      <router-link
+          v-for="(path,label) in mobileRoutes"
+          :key="label"
+          :to="path"
+          class="block px-4 py-2 hover:bg-secondary"
+          @click="mobileOpen=false"
+      >{{ label }}</router-link>
+
       <template v-if="isAuthenticated">
-        <router-link v-if="isUser" to="/user/dashboard" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Dashboard</router-link>
-        <router-link v-if="isCoach" to="/coach/dashboard" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Coach Dashboard</router-link>
-        <router-link v-if="isAdmin" to="/admin/users" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Admin Dashboard</router-link>
-        <button @click="logout" class="block w-full text-left px-4 py-2 hover:bg-secondary">Logout</button>
+        <router-link
+            :to="dashboardRoute"
+            class="block px-4 py-2 hover:bg-secondary"
+            @click="mobileOpen=false"
+        >{{ dashboardLabel }}</router-link>
+        <button
+            @click="handleLogout"
+            class="w-full text-left px-4 py-2 hover:bg-secondary"
+        >Logout</button>
       </template>
+
       <template v-else>
-        <router-link to="/login" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Login</router-link>
-        <router-link to="/register" class="block px-4 py-2 hover:bg-secondary" @click="toggleMobileMenu">Register</router-link>
+        <router-link to="/login" class="block px-4 py-2 hover:bg-secondary">Login</router-link>
+        <router-link to="/register" class="block px-4 py-2 hover:bg-secondary">Register</router-link>
       </template>
     </div>
   </nav>
@@ -65,35 +96,45 @@ import AuthService from '@/services/auth.js';
 export default {
   data() {
     return {
-      mobileMenuOpen: false,
+      mobileOpen: false,
+      mobileRoutes: {
+        Home: '/',
+        Memberships: '/memberships',
+        Products: '/products',
+        Classes: '/classes',
+        Workouts: '/workouts'
+      }
     };
   },
   computed: {
-    ...mapGetters(['isAuthenticated', 'userRole']),
-    isUser() {
-      return this.userRole === 'USER';
+    ...mapGetters(['isAuthenticated','userRole']),
+    dashboardRoute() {
+      switch (this.userRole) {
+        case 'ADMIN': return { name: 'AdminUsers' };
+        case 'COACH': return { name: 'CoachDashboard' };
+        default:      return { name: 'UserDashboard' };
+      }
     },
-    isCoach() {
-      return this.userRole === 'COACH';
-    },
-    isAdmin() {
-      return this.userRole === 'ADMIN';
-    },
+    dashboardLabel() {
+      switch (this.userRole) {
+        case 'ADMIN': return 'Admin Dashboard';
+        case 'COACH': return 'Coach Dashboard';
+        default:      return 'Dashboard';
+      }
+    }
   },
   methods: {
-    toggleMobileMenu() {
-      this.mobileMenuOpen = !this.mobileMenuOpen;
-    },
-    async logout() {
+    async handleLogout() {
       try {
         await AuthService.logout();
         this.$store.dispatch('logout');
-        this.$router.push('/login');
-        this.$toast.success('Logged out successfully');
-      } catch (error) {
+        // redirect to login after logout
+        this.$router.push({ name: 'Login' });
+        this.$toast.success('Logged out');
+      } catch {
         this.$toast.error('Logout failed');
       }
-    },
-  },
+    }
+  }
 };
 </script>

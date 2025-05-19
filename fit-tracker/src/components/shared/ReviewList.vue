@@ -1,28 +1,59 @@
 <template>
   <div class="space-y-4">
-    <div v-for="review in reviews" :key="review.id" class="bg-white p-4 rounded shadow">
-      <div class="flex justify-between">
-        <h4 class="font-semibold text-primary">{{ review.user.username }}</h4>
-        <span class="text-yellow-500">{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</span>
+    <div
+        v-for="r in reviews"
+        :key="r.id"
+        class="bg-white p-4 rounded shadow flex justify-between"
+    >
+      <div>
+        <p class="font-semibold text-primary">{{ r.user.username }}</p>
+        <p class="text-gray-700">{{ r.comment }}</p>
       </div>
-      <p class="text-gray-600">{{ review.comment }}</p>
-      <p class="text-sm text-gray-500">{{ formatDate(review.createdAt) }}</p>
+      <button
+          v-if="r.user.id===userId"
+          @click="deleteReview(r.id)"
+          class="text-red-500 hover:underline"
+      >Delete</button>
     </div>
+    <Pagination
+        :currentPage="page"
+        :totalPages="totalPages"
+        @page-changed="loadReviews"
+    />
   </div>
 </template>
 
 <script>
+import ReviewService from '@/services/reviews.js';
+import Pagination   from './Pagination.vue';
+
 export default {
-  props: {
-    reviews: {
-      type: Array,
-      required: true,
+  props: { workoutId:{type:Number, required:true} },
+  components:{ Pagination },
+  data(){ return { reviews:[], page:0, totalPages:1 }; },
+  computed:{ userId:()=> JSON.parse(localStorage.getItem('user'))?.id },
+  created(){ this.loadReviews(0); },
+  methods:{
+    async loadReviews(page) {
+      this.page = page;
+      try {
+        const { content, totalPages } =
+            await ReviewService.getForWorkout(this.workoutId, { page, size:5 });
+        this.reviews = content;
+        this.totalPages = totalPages;
+      } catch {
+        this.$toast.open({ message:'Load failed', type:'error' });
+      }
     },
-  },
-  methods: {
-    formatDate(date) {
-      return new Date(date).toLocaleDateString();
-    },
-  },
+    async deleteReview(id) {
+      try {
+        await ReviewService.delete(id);
+        this.$toast.open({ message:'Deleted', type:'success' });
+        this.loadReviews(this.page);
+      } catch {
+        this.$toast.open({ message:'Delete failed', type:'error' });
+      }
+    }
+  }
 };
 </script>

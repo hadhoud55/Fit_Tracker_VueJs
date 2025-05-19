@@ -1,30 +1,44 @@
-import axios from './axios.js';
+import axios from './axios';
 
 const ProductService = {
-    async searchProducts(keyword, page = 0, size = 10) {
-        return axios.get(`/products?keyword=${keyword}&page=${page}&size=${size}`);
+    search({ keyword = '', page = 0, size = 10 } = {}) {
+        return axios.get('/products/search', { params: { keyword, page, size } })
+            .then(res => res.data);
     },
-    async getById(id) {
-        return axios.get(`/products/${id}`);
+
+    getById(productId) {
+        return axios.get(`/products/${productId}`)
+            .then(res => res.data);
     },
-    async create(product) {
-        return axios.post('/products', product);
+
+    create(productPayload) {
+        return axios.post('/products', productPayload)
+            .then(res => res.data);
     },
-    async update(id, product) {
-        return axios.put(`/products/${id}`, product);
+
+    update(productId, productPayload) {
+        return axios.put(`/products/${productId}`, productPayload)
+            .then(res => res.data);
     },
-    async delete(id) {
-        return axios.delete(`/products/${id}`);
+
+    delete(productId) {
+        return axios.delete(`/products/${productId}`);
     },
-    async getLowStock(threshold, page = 0, size = 10) {
-        return axios.get(`/products/low-stock?threshold=${threshold}&page=${page}&size=${size}`);
+
+    getLowStock({ threshold = 10, page = 0, size = 10 } = {}) {
+        return axios.get('/products/low-stock', { params: { threshold, page, size } })
+            .then(res => res.data);
     },
-    async updateStock(productId, quantity) {
-        return axios.put(`/products/${productId}/stock`, null, { params: { quantity } });
+
+    updateStock(productId, quantity) {
+        return axios.put(`/products/${productId}/stock`, null, { params: { quantity } })
+            .then(res => res.data);
     },
-    async setStock(productId, stock) {
-        return axios.put(`/products/${productId}/stock/set`, null, { params: { stock } });
-    },
+
+    setStock(productId, stock) {
+        return axios.put(`/products/${productId}/stock/set`, null, { params: { stock } })
+            .then(res => res.data);
+    }
 };
 
 export default ProductService;
