@@ -43,74 +43,89 @@ import AdminReviews     from '@/views/admin/AdminReviews.vue';
 Vue.use(VueRouter);
 
 const routes = [
-    { path: '/',            name: 'Home',        component: Home },
-    { path: '/login',       name: 'Login',       component: Login },
-    { path: '/register',    name: 'Register',    component: Register },
-    { path: '/memberships', name: 'Memberships', component: Memberships },
-    { path: '/classes',     name: 'Classes',     component: Classes },
+    // Public
+    { path: '/',             name: 'Home',          component: Home },
+    { path: '/login',        name: 'Login',         component: Login },
+    { path: '/register',     name: 'Register',      component: Register },
+    { path: '/memberships',  name: 'Memberships',   component: Memberships },
+    { path: '/classes',      name: 'Classes',       component: Classes },
 
+    // Public Products
+    { path: '/products',      name: 'Products',      component: Products },
+    { path: '/products/:id',  name: 'ProductDetail', component: ProductDetail },
+
+    // Top‑level Cart & Checkout
+    { path: '/cart',          name: 'Cart',          component: Cart,     meta: { requiresAuth: true } },
+    { path: '/checkout',      name: 'Checkout',      component: Checkout, meta: { requiresAuth: true } },
+
+    // User‑scoped
     {
         path: '/user',
         component: { render: h => h('router-view') },
         meta: { requiresAuth: true, roles: ['USER','COACH','ADMIN'] },
         children: [
-            { path: 'dashboard',      name: 'UserDashboard', component: UserDashboard },
-            { path: 'workouts',       name: 'Workouts',      component: Workouts },
-            { path: 'workout/:id',    name: 'WorkoutDetail', component: WorkoutDetail },
-            { path: 'class/:id',      name: 'ClassDetail',   component: ClassDetail },
-            { path: 'bookings',       name: 'Bookings',      component: Bookings },
-            { path: 'cart',           name: 'Cart',          component: Cart },
-            { path: 'checkout',       name: 'Checkout',      component: Checkout },
-            { path: 'orders',         name: 'Orders',        component: Orders },
-            { path: 'order/:id',      name: 'OrderDetail',   component: OrderDetail },
-            { path: 'payments',       name: 'Payments',      component: Payments },
-            { path: 'reviews',        name: 'Reviews',       component: Reviews },
-            { path: 'products',       name: 'Products',      component: Products },
-            { path: 'product/:id',    name: 'ProductDetail', component: ProductDetail }
+            { path: 'dashboard',     name: 'UserDashboard', component: UserDashboard },
+            { path: 'workouts',      name: 'Workouts',      component: Workouts },
+            { path: 'workout/:id',   name: 'WorkoutDetail', component: WorkoutDetail },
+            { path: 'class/:id',     name: 'ClassDetail',   component: ClassDetail },
+            { path: 'bookings',      name: 'Bookings',      component: Bookings },
+            // no more 'cart' or 'checkout' here
+            { path: 'orders',        name: 'Orders',        component: Orders },
+            { path: 'order/:id',     name: 'OrderDetail',   component: OrderDetail },
+            { path: 'payments',      name: 'Payments',      component: Payments },
+            { path: 'reviews',       name: 'Reviews',       component: Reviews },
+            // redirect old /user/products → public
+            { path: 'products',      redirect: '/products' },
+            { path: 'product/:id',   name: 'UserProduct',   component: ProductDetail }
         ]
     },
 
+    // Coach
     {
         path: '/coach',
         component: { render: h => h('router-view') },
         meta: { requiresAuth: true, roles: ['COACH','ADMIN'] },
         children: [
-            { path: 'dashboard',        name: 'CoachDashboard',   component: CoachDashboard },
-            { path: 'my-classes',       name: 'MyClasses',        component: MyClasses },
-            { path: 'class/:id',        name: 'CoachClassDetail', component: CoachClassDetail },
-            { path: 'manage-reviews',   name: 'ManageReviews',    component: ManageReviews }
+            { path: 'dashboard',     name: 'CoachDashboard',   component: CoachDashboard },
+            { path: 'my-classes',    name: 'MyClasses',        component: MyClasses },
+            { path: 'class/:id',     name: 'CoachClassDetail', component: CoachClassDetail },
+            { path: 'manage-reviews',name: 'ManageReviews',    component: ManageReviews }
         ]
     },
 
+    // Admin
     {
         path: '/admin',
         component: { render: h => h('router-view') },
         meta: { requiresAuth: true, roles: ['ADMIN'] },
         children: [
-            { path: 'users',       name: 'AdminUsers',       component: AdminUsers },
-            { path: 'workouts',    name: 'AdminWorkouts',    component: AdminWorkouts },
-            { path: 'classes',     name: 'AdminClasses',     component: AdminClasses },
-            { path: 'products',    name: 'AdminProducts',    component: AdminProducts },
-            { path: 'memberships', name: 'AdminMemberships', component: AdminMemberships },
-            { path: 'orders',      name: 'AdminOrders',      component: AdminOrders },
-            { path: 'reviews',     name: 'AdminReviews',     component: AdminReviews }
+            { path: 'users',        name: 'AdminUsers',       component: AdminUsers },
+            { path: 'workouts',     name: 'AdminWorkouts',    component: AdminWorkouts },
+            { path: 'classes',      name: 'AdminClasses',     component: AdminClasses },
+            { path: 'products',     name: 'AdminProducts',    component: AdminProducts },
+            { path: 'memberships',  name: 'AdminMemberships', component: AdminMemberships },
+            { path: 'orders',       name: 'AdminOrders',      component: AdminOrders },
+            { path: 'reviews',      name: 'AdminReviews',     component: AdminReviews }
         ]
     },
 
+    // 404
     { path: '*', name: 'NotFound', component: NotFound }
 ];
 
-const router = new VueRouter({ mode: 'history', routes });
+const router = new VueRouter({
+    mode: 'history',
+    routes
+});
 
+// Auth guard
 router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth) {
         if (!store.getters.isAuthenticated) {
             return next({ name: 'Login' });
         }
-        const allowed = to.matched
-            .flatMap(r => r.meta.roles || []);
-        if (allowed.length && !allowed.includes(store.getters.userRole)) {
-            // if a USER tries /admin, send them to user dashboard
+        const roles = to.matched.flatMap(r => r.meta.roles || []);
+        if (roles.length && !roles.includes(store.getters.userRole)) {
             const dash = store.getters.userRole === 'ADMIN'
                 ? 'AdminUsers'
                 : store.getters.userRole === 'COACH'

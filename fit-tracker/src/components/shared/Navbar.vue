@@ -15,8 +15,18 @@
         <router-link to="/classes" class="hover:text-accent">Classes</router-link>
         <router-link to="/workouts" class="hover:text-accent">Workouts</router-link>
 
+        <!-- Cart Link with Count -->
+        <router-link to="/cart" class="relative hover:text-accent">
+          🛒
+          <span
+              v-if="cartCount > 0"
+              class="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+          >
+            {{ cartCount }}
+          </span>
+        </router-link>
+
         <template v-if="isAuthenticated">
-          <!-- dynamic dashboard link -->
           <router-link
               :to="dashboardRoute"
               class="hover:text-accent"
@@ -69,6 +79,21 @@
           @click="mobileOpen=false"
       >{{ label }}</router-link>
 
+      <!-- Cart in Mobile Menu -->
+      <router-link
+          to="/cart"
+          class="block px-4 py-2 hover:bg-secondary flex justify-between items-center"
+          @click="mobileOpen = false"
+      >
+        Cart
+        <span
+            v-if="cartCount > 0"
+            class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+        >
+          {{ cartCount }}
+        </span>
+      </router-link>
+
       <template v-if="isAuthenticated">
         <router-link
             :to="dashboardRoute"
@@ -99,6 +124,7 @@ export default {
       mobileOpen: false,
       mobileRoutes: {
         Home: '/',
+
         Memberships: '/memberships',
         Products: '/products',
         Classes: '/classes',
@@ -107,7 +133,11 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['isAuthenticated','userRole']),
+    ...mapGetters(['isAuthenticated', 'userRole', 'cartItems']),
+    cartCount() {
+      // sum up quantities
+      return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    },
     dashboardRoute() {
       switch (this.userRole) {
         case 'ADMIN': return { name: 'AdminUsers' };
@@ -128,7 +158,6 @@ export default {
       try {
         await AuthService.logout();
         this.$store.dispatch('logout');
-        // redirect to login after logout
         this.$router.push({ name: 'Login' });
         this.$toast.success('Logged out');
       } catch {
