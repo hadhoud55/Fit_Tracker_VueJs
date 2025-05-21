@@ -1,37 +1,49 @@
-import authHeader from '@/utils/auth-header';
-import axios from 'axios';
-
-const API = 'http://localhost:8082/api/orders';
+import axios from './axios';
+const API = '/orders';
 
 export default {
-    // Get all orders (admin)
-    getAll(page = 0, size = 10) {
-        return axios.get(`${API}?page=${page}&size=${size}`, { headers: authHeader() });
+    // Admin: get all orders
+    async getAll(page = 0, size = 10) {
+        const res = await axios.get(`${API}`, { params: { page, size } });
+        return res.data;
     },
 
     // Get orders for current or specific user
-    getUserOrders({ userId = null, page = 0, size = 10 }) {
-        const url = userId ? `${API}/user?userId=${userId}&page=${page}&size=${size}` : `${API}/user?page=${page}&size=${size}`;
-        return axios.get(url, { headers: authHeader() });
+    async getUserOrders({ userId = null, page = 0, size = 10 } = {}) {
+        const url = userId
+            ? `${API}/user?userId=${userId}&page=${page}&size=${size}`
+            : `${API}/user?page=${page}&size=${size}`;
+        const res = await axios.get(url);
+        return res.data;
     },
 
     // Get order by ID
-    getById(id) {
-        return axios.get(`${API}/${id}`, { headers: authHeader() });
+    async getById(id) {
+        const res = await axios.get(`${API}/${id}`);
+        return res.data;
     },
 
     // Create new order
-    create(data) {
-        return axios.post(API, data, { headers: authHeader() });
+    async create(payload) {
+        const res = await axios.post(API, payload);
+        return res.data;
     },
 
     // Update existing order
-    update(id, data) {
-        return axios.put(`${API}/${id}`, data, { headers: authHeader() });
+    async update(id, payload) {
+        const res = await axios.put(`${API}/${id}`, payload);
+        return res.data;
     },
 
     // Delete an order
-    delete(id) {
-        return axios.delete(`${API}/${id}`, { headers: authHeader() });
+    async delete(id) {
+        await axios.delete(`${API}/${id}`);
+    },
+
+    // Cancel an order
+    async cancel(id) {
+        // hits PUT /api/orders/{id}/cancel (you'll need to add this endpoint in the backend)
+        const res = await axios.put(`/orders/${id}/status`, { status: 'CANCELLED' });
+        return res.data;
     }
 };

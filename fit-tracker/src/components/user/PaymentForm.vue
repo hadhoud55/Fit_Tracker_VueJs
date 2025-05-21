@@ -36,40 +36,44 @@
         type="submit"
         class="w-full bg-accent text-white py-2 rounded hover:bg-green-700"
     >
-      Pay Now
+      Pay ${{ amount.toFixed(2) }}
     </button>
   </form>
 </template>
 
 <script>
 import PaymentService from '@/services/payments.js';
-
 export default {
   props: {
     orderId: { type: Number, required: true },
-    total: { type: Number, required: true }
+    amount:  { type: Number, required: true }
   },
   data() {
     return {
-      form: { cardNumber: '', expiry: '', cvc: '' }
+      form: {
+        cardNumber: '',
+        expiry: '',
+        cvc: ''
+      }
     };
   },
   methods: {
     async submit() {
       try {
-        const response = await PaymentService.create({
+        const payload = {
           orderId: this.orderId,
-          amount: this.total,
+          amount: this.amount,
+          paymentDate: new Date().toISOString(),
+          status: 'PENDING',
           cardNumber: this.form.cardNumber,
           expiry: this.form.expiry,
-          cvc: this.form.cvc,
-          paymentDate: new Date().toISOString(),
-          status: 'PENDING' // Initial status; backend should determine final status
-        });
-        // Emit the payment status from the backend response
-        this.$emit('submitted', response.status);
-      } catch (error) {
-        this.$toast.error(error.response?.data?.message || 'Payment failed');
+          cvc: this.form.cvc
+        };
+        const res = await PaymentService.create(payload);
+        // emit full response so parent can inspect cardLast4/status
+        this.$emit('submitted', res);
+      } catch (e) {
+        this.$toast.error(e.response?.data?.message || 'Payment failed');
       }
     }
   }
