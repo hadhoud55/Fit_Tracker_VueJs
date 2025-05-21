@@ -7,26 +7,26 @@
     />
     <h3 class="mt-2 text-lg font-semibold">{{ workout.name }}</h3>
     <p class="text-gray-600">{{ workout.category }}</p>
-    <div class="mt-4 flex justify-between items-center">
-      <router-link
-          :to="{ name: 'WorkoutDetail', params: { id: workout.id } }"
-          class="text-blue-500 hover:underline"
+    <div class="mt-4 flex justify-between">
+      <button
+          @click="$emit('edit', workout)"
+          class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
       >
-        Details
-      </router-link>
-
-      <router-link
-          :to="{ name: 'WorkoutDetail', params: { id: workout.id } }"
-          class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+        Edit
+      </button>
+      <button
+          @click="$emit('delete', workout)"
+          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
       >
-        View
-      </router-link>
+        Delete
+      </button>
     </div>
   </div>
 </template>
 
 <script>
 export default {
+  name: 'AdminWorkoutCard',
   props: {
     workout: {
       type: Object,

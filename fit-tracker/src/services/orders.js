@@ -1,34 +1,49 @@
 import axios from './axios';
+const API = '/orders';
 
-const OrderService = {
-    getAll({ page = 0, size = 10 } = {}) {
-        return axios.get('/orders', { params: { page, size } })
-            .then(res => res.data);
+export default {
+    // Admin: get all orders
+    async getAll(page = 0, size = 10) {
+        const res = await axios.get(`${API}`, { params: { page, size } });
+        return res.data;
     },
 
-    getById(orderId) {
-        return axios.get(`/orders/${orderId}`)
-            .then(res => res.data);
+    // Get orders for current or specific user
+    async getUserOrders({ userId = null, page = 0, size = 10 } = {}) {
+        const url = userId
+            ? `${API}/user?userId=${userId}&page=${page}&size=${size}`
+            : `${API}/user?page=${page}&size=${size}`;
+        const res = await axios.get(url);
+        return res.data;
     },
 
-    getByUser(userId, { page = 0, size = 10 } = {}) {
-        return axios.get(`/orders/user/${userId}`, { params: { page, size } })
-            .then(res => res.data);
+    // Get order by ID
+    async getById(id) {
+        const res = await axios.get(`${API}/${id}`);
+        return res.data;
     },
 
-    create(orderPayload) {
-        return axios.post('/orders', orderPayload)
-            .then(res => res.data);
+    // Create new order
+    async create(payload) {
+        const res = await axios.post(API, payload);
+        return res.data;
     },
 
-    update(orderId, orderPayload) {
-        return axios.put(`/orders/${orderId}`, orderPayload)
-            .then(res => res.data);
+    // Update existing order
+    async update(id, payload) {
+        const res = await axios.put(`${API}/${id}`, payload);
+        return res.data;
     },
 
-    delete(orderId) {
-        return axios.delete(`/orders/${orderId}`);
+    // Delete an order
+    async delete(id) {
+        await axios.delete(`${API}/${id}`);
+    },
+
+    // Cancel an order
+    async cancel(id) {
+        // hits PUT /api/orders/{id}/cancel (you'll need to add this endpoint in the backend)
+        const res = await axios.put(`/orders/${id}/status`, { status: 'CANCELLED' });
+        return res.data;
     }
 };
-
-export default OrderService;

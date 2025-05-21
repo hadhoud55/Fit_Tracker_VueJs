@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="submitPayment" class="bg-white p-6 rounded shadow-md space-y-4">
+  <form @submit.prevent="submit" class="bg-white p-6 rounded shadow-md space-y-4">
     <div>
       <label class="block text-gray-700">Card Number</label>
       <input
@@ -35,7 +35,9 @@
     <button
         type="submit"
         class="w-full bg-accent text-white py-2 rounded hover:bg-green-700"
-    >Pay Now</button>
+    >
+      Pay ${{ amount.toFixed(2) }}
+    </button>
   </form>
 </template>
 
@@ -43,28 +45,35 @@
 import PaymentService from '@/services/payments.js';
 export default {
   props: {
-    orderId:   { type:Number, required:true },
-    orderTotal:{ type:Number, required:true }
+    orderId: { type: Number, required: true },
+    amount:  { type: Number, required: true }
   },
   data() {
     return {
-      form: { cardNumber:'', expiry:'', cvc:'' }
+      form: {
+        cardNumber: '',
+        expiry: '',
+        cvc: ''
+      }
     };
   },
   methods: {
-    async submitPayment() {
+    async submit() {
       try {
-        await PaymentService.create({
+        const payload = {
           orderId: this.orderId,
-          amount:  this.orderTotal,
+          amount: this.amount,
+          paymentDate: new Date().toISOString(),
+          status: 'PENDING',
           cardNumber: this.form.cardNumber,
-          expiry:     this.form.expiry,
-          cvc:        this.form.cvc
-        });
-        this.$toast.open({ message:'Payment successful', type:'success' });
-        this.$emit('paid');
-      } catch (err) {
-        this.$toast.open({ message:err.message||'Payment failed', type:'error' });
+          expiry: this.form.expiry,
+          cvc: this.form.cvc
+        };
+        const res = await PaymentService.create(payload);
+        // emit full response so parent can inspect cardLast4/status
+        this.$emit('submitted', res);
+      } catch (e) {
+        this.$toast.error(e.response?.data?.message || 'Payment failed');
       }
     }
   }

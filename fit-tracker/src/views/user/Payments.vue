@@ -1,45 +1,52 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-primary mb-6">My Payments</h1>
-    <div v-for="payment in payments" :key="payment.id" class="bg-white p-6 rounded shadow-md mb-4">
-      <p class="text-gray-600">Payment #{{ payment.id }}</p>
-      <p class="text-gray-600">Amount: ${{ payment.amount.toFixed(2) }}</p>
-      <p class="text-gray-600">Date: {{ formatDate(payment.createdAt) }}</p>
-    </div>
-    <Pagination :total-pages="totalPages" :current-page="currentPage" @page-changed="fetchPayments" />
+    <h1 class="text-2xl font-bold mb-6">My Payments</h1>
+
+    <div v-if="!payments.length" class="text-gray-600">You have no payments yet.</div>
+    <table v-else class="w-full bg-white rounded shadow table-auto">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="p-2">Order ID</th>
+        <th class="p-2">Amount</th>
+        <th class="p-2">Method</th>
+        <th class="p-2">Card End</th>
+        <th class="p-2">Status</th>
+        <th class="p-2">Paid At</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="p in payments" :key="p.id" class="border-t">
+        <td class="p-2">{{ p.orderId }}</td>
+        <td class="p-2">${{ p.amount.toFixed(2) }}</td>
+        <td class="p-2">{{ p.paymentMethod }}</td>
+        <td class="p-2">•••• {{ p.cardLast4 }}</td>
+        <td class="p-2">{{ p.status }}</td>
+        <td class="p-2">{{ formatDate(p.paymentDate) }}</td>
+      </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script>
-import Pagination from '@/components/shared/Pagination.vue';
 import PaymentService from '@/services/payments.js';
 
 export default {
-  components: {Pagination},
   data() {
-    return {
-      payments: [],
-      currentPage: 0,
-      totalPages: 0,
-    };
+    return { payments: [] };
   },
   async created() {
-    await this.fetchPayments(0);
+    try {
+      const data = await PaymentService.getUserPayments();
+      this.payments = data.content;
+    } catch {
+      this.$toast.error('Failed to load payments');
+    }
   },
   methods: {
-    async fetchPayments(page) {
-      try {
-        const response = await PaymentService.getByUserId(this.$store.getters.userId, page, 10);
-        this.payments = response.data.content;
-        this.totalPages = response.data.totalPages;
-        this.currentPage = page;
-      } catch (error) {
-        this.$toast.error('Failed to load payments');
-      }
-    },
-    formatDate(date) {
-      return new Date(date).toLocaleString();
-    },
-  },
+    formatDate(d) {
+      return new Date(d).toLocaleString();
+    }
+  }
 };
 </script>

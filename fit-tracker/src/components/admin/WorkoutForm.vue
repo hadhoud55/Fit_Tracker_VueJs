@@ -13,16 +13,29 @@
         <input v-model="form.category" class="w-full p-2 border rounded" required />
       </div>
       <div>
+        <label class="block text-gray-700">Description</label>
+        <textarea v-model="form.description" class="w-full p-2 border rounded" required></textarea>
+      </div>
+      <div>
         <label class="block text-gray-700">Duration (min)</label>
         <input v-model.number="form.durationInMinutes" type="number" class="w-full p-2 border rounded" required />
+      </div>
+      <div>
+        <label class="block text-gray-700">Coach ID</label>
+        <input v-model.number="form.coachId" type="number" class="w-full p-2 border rounded" required />
       </div>
       <div>
         <label class="block text-gray-700">Image URLs (comma-separated)</label>
         <input v-model="form.imageUrls" class="w-full p-2 border rounded" />
       </div>
-      <button type="submit" class="bg-accent text-white py-2 px-4 rounded hover:bg-green-700">
-        Save Workout
-      </button>
+      <div class="flex space-x-4">
+        <button type="submit" class="bg-accent text-white py-2 px-4 rounded hover:bg-green-700">
+          Save Workout
+        </button>
+        <button type="button" @click="$emit('cancel')" class="bg-gray-300 py-2 px-4 rounded hover:bg-gray-400">
+          Cancel
+        </button>
+      </div>
     </form>
   </div>
 </template>
@@ -31,24 +44,34 @@
 import WorkoutService from '@/services/workouts.js';
 
 export default {
-  props: { workout: { type: Object, default: null } },
+  props: {
+    workout: { type: Object, default: null }
+  },
   data() {
     return {
       form: {
         name: '',
         category: '',
+        description: '',
         durationInMinutes: null,
+        coachId: null,
         imageUrls: ''
       }
     };
   },
   computed: {
-    isEdit() { return !!this.workout; }
+    isEdit() {
+      return !!this.workout;
+    }
   },
   created() {
     if (this.isEdit) {
       this.form = {
-        ...this.workout,
+        name: this.workout.name || '',
+        category: this.workout.category || '',
+        description: this.workout.description || '',
+        durationInMinutes: this.workout.durationInMinutes || null,
+        coachId: this.workout.coachId || null,
         imageUrls: this.workout.imageUrls?.join(',') || ''
       };
     }
@@ -57,19 +80,29 @@ export default {
     async submitWorkout() {
       try {
         const payload = {
-          ...this.form,
-          imageUrls: this.form.imageUrls.split(',').map(u => u.trim())
+          name: this.form.name,
+          category: this.form.category,
+          description: this.form.description,
+          durationInMinutes: this.form.durationInMinutes,
+          coachId: this.form.coachId,
+          imageUrls: this.form.imageUrls
+              .split(',')
+              .map(url => url.trim())
+              .filter(Boolean)
         };
+
         if (this.isEdit) {
           await WorkoutService.update(this.workout.id, payload);
-          this.$toast.open({ message: 'Workout updated', type: 'success' });
+          this.$toast.success('Workout updated');
         } else {
           await WorkoutService.create(payload);
-          this.$toast.open({ message: 'Workout created', type: 'success' });
+          this.$toast.success('Workout created');
         }
-        this.$emit('saved');
-      } catch {
-        this.$toast.open({ message: 'Save failed', type: 'error' });
+
+        this.$emit('submitted');
+      } catch (error) {
+        console.error(error);
+        this.$toast.error('Save failed');
       }
     }
   }

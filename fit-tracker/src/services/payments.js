@@ -1,15 +1,28 @@
 import axios from './axios';
+const API = '/payments';
 
-const PaymentService = {
-    create(paymentPayload) {
-        return axios.post('/payments', paymentPayload)
-            .then(res => res.data);
+export default {
+    // Create a payment
+    async create(payload) {
+        const res = await axios.post(API, payload);
+        return res.data;  // now includes { id, orderId, amount, paymentDate, status, paymentMethod, cardLast4 }
     },
 
-    getByUser(userId, { page = 0, size = 10 } = {}) {
-        return axios.get(`/payments/user/${userId}`, { params: { page, size } })
-            .then(res => res.data);
+    // Get payment by ID
+    async getById(id) {
+        const res = await axios.get(`${API}/${id}`);
+        return res.data;
+    },
+
+    // User’s payments
+    async getUserPayments(page = 0, size = 10) {
+        const res = await axios.get(`${API}/user`, { params: { page, size } });
+        return res.data;
+    },
+
+    // Admin: all payments
+    async getAll(page = 0, size = 10) {
+        const res = await axios.get(API, { params: { page, size } });
+        return res.data;
     }
 };
-
-export default PaymentService;
