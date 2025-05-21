@@ -1,31 +1,34 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-primary mb-6">My Orders</h1>
-    <div v-for="order in orders" :key="order.id" class="bg-white p-6 rounded shadow-md mb-4">
-      <div class="flex justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-primary">Order #{{ order.id }}</h3>
-          <p class="text-gray-600">Total: ${{ order.total.toFixed(2) }}</p>
-          <p class="text-gray-600">Status: {{ order.status }}</p>
-        </div>
-        <router-link :to="`/orders/${order.id}`" class="text-accent hover:underline">View Details</router-link>
-      </div>
+    <h1 class="text-2xl font-bold mb-6">My Orders</h1>
+    <div v-if="loading">Loading orders...</div>
+    <div v-else-if="orders.length === 0">No orders found.</div>
+    <div v-else>
+      <ul class="space-y-4">
+        <li v-for="o in orders" :key="o.id" class="p-4 border rounded shadow">
+          <p><strong>Date:</strong> {{ formatDate(o.orderDate) }}</p>
+          <p><strong>Status:</strong> {{ o.status }}</p>
+          <p><strong>Total:</strong> ${{ o.totalAmount.toFixed(2) }}</p>
+          <router-link :to="`/order/${o.id}`" class="text-accent underline">View Details</router-link>
+        </li>
+      </ul>
+      <Pagination :total-pages="totalPages" :current-page="currentPage" @page-changed="fetchOrders" />
     </div>
-    <Pagination :total-pages="totalPages" :current-page="currentPage" @page-changed="fetchOrders" />
   </div>
 </template>
 
 <script>
+import OrderService from '@/services/orders';
 import Pagination from '@/components/shared/Pagination.vue';
-import OrderService from '@/services/orders.js';
 
 export default {
-  components: {Pagination},
+  components: { Pagination },
   data() {
     return {
       orders: [],
+      loading: true,
       currentPage: 0,
-      totalPages: 0,
+      totalPages: 0
     };
   },
   async created() {
@@ -34,14 +37,19 @@ export default {
   methods: {
     async fetchOrders(page) {
       try {
-        const response = await OrderService.getByUserId(this.$store.getters.userId, page, 10);
-        this.orders = response.data.content;
-        this.totalPages = response.data.totalPages;
+        const res = await OrderService.getUserOrders({ page, size: 10 });
+        this.orders = res.data.content;
+        this.totalPages = res.data.totalPages;
         this.currentPage = page;
-      } catch (error) {
+      } catch (err) {
         this.$toast.error('Failed to load orders');
+      } finally {
+        this.loading = false;
       }
     },
-  },
+    formatDate(d) {
+      return new Date(d).toLocaleString();
+    }
+  }
 };
 </script>

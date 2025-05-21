@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="submitPayment" class="bg-white p-6 rounded shadow-md space-y-4">
+  <form @submit.prevent="submit" class="bg-white p-6 rounded shadow-md space-y-4">
     <div>
       <label class="block text-gray-700">Card Number</label>
       <input
@@ -35,36 +35,41 @@
     <button
         type="submit"
         class="w-full bg-accent text-white py-2 rounded hover:bg-green-700"
-    >Pay Now</button>
+    >
+      Pay Now
+    </button>
   </form>
 </template>
 
 <script>
 import PaymentService from '@/services/payments.js';
+
 export default {
   props: {
-    orderId:   { type:Number, required:true },
-    orderTotal:{ type:Number, required:true }
+    orderId: { type: Number, required: true },
+    total: { type: Number, required: true }
   },
   data() {
     return {
-      form: { cardNumber:'', expiry:'', cvc:'' }
+      form: { cardNumber: '', expiry: '', cvc: '' }
     };
   },
   methods: {
-    async submitPayment() {
+    async submit() {
       try {
-        await PaymentService.create({
+        const response = await PaymentService.create({
           orderId: this.orderId,
-          amount:  this.orderTotal,
+          amount: this.total,
           cardNumber: this.form.cardNumber,
-          expiry:     this.form.expiry,
-          cvc:        this.form.cvc
+          expiry: this.form.expiry,
+          cvc: this.form.cvc,
+          paymentDate: new Date().toISOString(),
+          status: 'PENDING' // Initial status; backend should determine final status
         });
-        this.$toast.open({ message:'Payment successful', type:'success' });
-        this.$emit('paid');
-      } catch (err) {
-        this.$toast.open({ message:err.message||'Payment failed', type:'error' });
+        // Emit the payment status from the backend response
+        this.$emit('submitted', response.status);
+      } catch (error) {
+        this.$toast.error(error.response?.data?.message || 'Payment failed');
       }
     }
   }

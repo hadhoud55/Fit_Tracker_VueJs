@@ -1,13 +1,14 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-primary mb-6">Checkout</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="orderId">
       <div>
         <h2 class="text-xl font-bold text-primary mb-4">Payment Details</h2>
-        <PaymentForm :order-id="orderId" :total="total" @submitted="handlePayment" />
+        <PaymentForm :order-id="orderId" :total="total" @submitted="status => handlePayment(status)" />
       </div>
       <OrderSummary :items="cartItems" />
     </div>
+    <div v-else class="text-center text-gray-500 py-10">Creating order...</div>
   </div>
 </template>
 
@@ -36,27 +37,34 @@ export default {
   },
   methods: {
     async createOrder() {
+      if (this.cartItems.length === 0) {
+        this.$toast.error('Your cart is empty.');
+        this.$router.push('/cart');
+        return;
+      }
       try {
-        const response = await OrderService.create({
-          items: this.cartItems.map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
-        });
-        this.orderId = response.data.id;
+        const payload = {
+          items: this.cartItems.map(i => ({
+            productId: i.product.id,
+            quantity: i.quantity
+          }))
+        };
+        const response = await OrderService.create(payload);
+        this.orderId = response.id; // Assuming response.id is returned
       } catch (error) {
-        this.$toast.error('Failed to create order');
+        this.$toast.error(error.response?.data?.message || 'Failed to create order');
+        this.$router.push('/cart');
       }
     },
-    async handlePayment() {
-      try {
+    handlePayment(status) {
+      if (status === 'COMPLETED') {
         this.$store.dispatch('clearCart');
-        this.$toast.success('Order placed successfully');
+        this.$toast.success('Payment successful');
         this.$router.push('/orders');
-      } catch (error) {
-        this.$toast.error('Failed to complete order');
+      } else {
+        this.$toast.error(`Payment status: ${status}. Please try again.`);
       }
-    },
-  },
+    }
+  }
 };
 </script>

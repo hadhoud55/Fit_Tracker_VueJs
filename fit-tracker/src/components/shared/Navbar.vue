@@ -155,14 +155,20 @@ export default {
   },
   methods: {
     async handleLogout() {
-      try {
-        await AuthService.logout();
-        this.$store.dispatch('logout');
-        this.$router.push({ name: 'Login' });
-        this.$toast.success('Logged out');
-      } catch {
-        this.$toast.error('Logout failed');
-      }
+      // Clear user data from localStorage
+      localStorage.clear();
+      
+      // Clear the user session
+      AuthService.logout();
+      
+      // Show success message
+      this.$toast.success('Logged out');
+      
+      // Navigate to login page
+      this.$router.push('/login');
+      
+      // Force a page refresh to ensure everything is cleared
+      window.location.reload();
     }
   }
 };

@@ -2,7 +2,7 @@ import axios from './axios';
 
 const WorkoutService = {
     search({ keyword = '', page = 0, size = 10 } = {}) {
-        return axios.get('/workouts/search', { params: { keyword, page, size } })
+        return axios.get('/workouts', { params: { keyword, page, size } })
             .then(res => res.data);
     },
 
