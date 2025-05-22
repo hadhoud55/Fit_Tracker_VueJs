@@ -1,5 +1,6 @@
 <template>
-  <form @submit.prevent="submit" class="grid gap-4 bg-white p-6 rounded shadow-md">
+  <form @submit.prevent="submit" class="grid gap-4 bg-white p-6 rounded shadow-md max-w-md mx-auto">
+    <!-- Class selector -->
     <div>
       <label for="classId" class="block text-gray-700">Class</label>
       <select
@@ -15,6 +16,7 @@
       </select>
     </div>
 
+    <!-- Booking date/time picker -->
     <div>
       <label for="bookingDate" class="block text-gray-700">Booking Date</label>
       <input
@@ -41,61 +43,76 @@
 <script>
 import BookingService from '@/services/bookings.js';
 import ClassService   from '@/services/classes.js';
+import { mapGetters } from 'vuex';
+
 export default {
+  name: 'BookingForm',
   props: {
     bookingData: { type: Object, default: null }
   },
   data() {
     return {
+      classes: [],
       form: {
-        classId: null,
+        classId:    null,
         bookingDate: ''
-      },
-      classes: []
+      }
     };
   },
   computed: {
-    isEdit() { return !!this.bookingData; },
-    minDateTime() { return new Date().toISOString().slice(0,16); }
+    ...mapGetters(['userId']),
+    isEdit() {
+      return !!this.bookingData;
+    },
+    // Minimum datetime is now, so user can't pick a past date
+    minDateTime() {
+      return new Date().toISOString().slice(0, 16);
+    }
   },
   async created() {
-    // load available classes
+    // 1) Load classes for the dropdown
     try {
-      const resp = await ClassService.getClasses({ page:0,size:100 });
+      const resp = await ClassService.getClasses({ page: 0, size: 100 });
       this.classes = resp.content;
-    } catch {
-      this.$toast.open({ message:'Failed to load classes', type:'error' });
+    } catch (err) {
+      this.$toast.error('Failed to load classes');
     }
+
+    // 2) If editing, prefill form
     if (this.isEdit) {
-      this.form = {
-        classId: this.bookingData.classId,
-        bookingDate: this.bookingData.bookingDate
-            ? new Date(this.bookingData.bookingDate).toISOString().slice(0,16)
-            : ''
-      };
+      this.form.classId = this.bookingData.classId;
+      this.form.bookingDate = this.bookingData.bookingDate
+          ? new Date(this.bookingData.bookingDate).toISOString().slice(0, 16)
+          : '';
     }
   },
   methods: {
-    formatDate(dt) { return new Date(dt).toLocaleString(); },
+    formatDate(dt) {
+      return new Date(dt).toLocaleString();
+    },
     async submit() {
       try {
+        // Build payload: include userId from the store
         const payload = {
-          classId: this.form.classId,
+          userId:      this.userId,
+          classId:     this.form.classId,
           bookingDate: this.form.bookingDate
               ? new Date(this.form.bookingDate).toISOString()
               : null
         };
+
         if (this.isEdit) {
           await BookingService.update(this.bookingData.id, payload);
           this.$emit('updated');
-          this.$toast.open({ message:'Booking updated', type:'success' });
+          this.$toast.success('Booking updated');
         } else {
           await BookingService.create(payload);
           this.$emit('created');
-          this.$toast.open({ message:'Booked successfully', type:'success' });
+          this.$toast.success('Booked successfully');
         }
       } catch (err) {
-        this.$toast.open({ message: err.message||'Booking failed', type:'error' });
+        const msg = err.response?.data?.message || err.message || 'Booking failed';
+        this.$toast.error(msg);
       }
     }
   }

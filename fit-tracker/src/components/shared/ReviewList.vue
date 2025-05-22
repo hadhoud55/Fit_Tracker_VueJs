@@ -6,54 +6,45 @@
         class="bg-white p-4 rounded shadow flex justify-between"
     >
       <div>
-        <p class="font-semibold text-primary">{{ r.user.username }}</p>
+        <p class="font-semibold text-primary">{{ r.username }}</p>
         <p class="text-gray-700">{{ r.comment }}</p>
       </div>
       <button
-          v-if="r.user.id===userId"
-          @click="deleteReview(r.id)"
+          v-if="r.userId === userId"
+          @click="$emit('delete', r.id)"
           class="text-red-500 hover:underline"
-      >Delete</button>
+      >
+        Delete
+      </button>
     </div>
+
     <Pagination
-        :currentPage="page"
-        :totalPages="totalPages"
-        @page-changed="loadReviews"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        @page-changed="page => $emit('page-changed', page)"
     />
   </div>
 </template>
 
 <script>
+import Pagination from './Pagination.vue';
 import ReviewService from '@/services/reviews.js';
-import Pagination   from './Pagination.vue';
 
 export default {
-  props: { workoutId:{type:Number, required:true} },
-  components:{ Pagination },
-  data(){ return { reviews:[], page:0, totalPages:1 }; },
-  computed:{ userId:()=> JSON.parse(localStorage.getItem('user'))?.id },
-  created(){ this.loadReviews(0); },
-  methods:{
-    async loadReviews(page) {
-      this.page = page;
-      try {
-        const { content, totalPages } =
-            await ReviewService.getForWorkout(this.workoutId, { page, size:5 });
-        this.reviews = content;
-        this.totalPages = totalPages;
-      } catch {
-        this.$toast.open({ message:'Load failed', type:'error' });
-      }
-    },
-    async deleteReview(id) {
-      try {
-        await ReviewService.delete(id);
-        this.$toast.open({ message:'Deleted', type:'success' });
-        this.loadReviews(this.page);
-      } catch {
-        this.$toast.open({ message:'Delete failed', type:'error' });
-      }
+  name: 'ReviewList',
+  components: { Pagination },
+  props: {
+    reviews:       { type: Array, required: true },
+    currentPage:   { type: Number, required: true },
+    totalPages:    { type: Number, required: true },
+    workoutId:     { type: Number, default: null }, // optional if you need it
+  },
+  computed: {
+    userId() {
+      const u = JSON.parse(localStorage.getItem('user'));
+      return u?.id;
     }
-  }
+  },
+
 };
 </script>

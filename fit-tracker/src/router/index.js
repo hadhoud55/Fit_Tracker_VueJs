@@ -8,7 +8,6 @@ import Login          from '@/views/shared/Login.vue';
 import Register       from '@/views/shared/Register.vue';
 import NotFound       from '@/views/shared/NotFound.vue';
 import Memberships    from '@/views/shared/Memberships.vue';
-import Classes        from '@/views/shared/Classes.vue';
 
 // User
 import UserDashboard  from '@/views/user/Dashboard.vue';
@@ -24,6 +23,7 @@ import Payments       from '@/views/user/Payments.vue';
 import Reviews        from '@/views/user/Reviews.vue';
 import Products       from '@/views/user/Products.vue';
 import ProductDetail  from '@/views/user/ProductDetail.vue';
+import Classes        from '@/views/user/Classes.vue';
 
 // Coach
 import CoachDashboard   from '@/views/coach/CoachDashboard.vue';
@@ -39,6 +39,7 @@ import AdminProducts    from '@/views/admin/AdminProducts.vue';
 import AdminMemberships from '@/views/admin/AdminMemberships.vue';
 import AdminOrders      from '@/views/admin/AdminOrders.vue';
 import AdminReviews     from '@/views/admin/AdminReviews.vue';
+import AdminPayments    from "@/views/admin/AdminPayments.vue";
 
 Vue.use(VueRouter);
 
@@ -48,6 +49,7 @@ const routes = [
     { path: '/login',       name: 'Login',         component: Login },
     { path: '/register',    name: 'Register',      component: Register },
     { path: '/memberships', name: 'Memberships',   component: Memberships },
+    { path: '/workouts',    name: 'Workouts',      component: Workouts },
     { path: '/classes',     name: 'Classes',       component: Classes },
 
     // Public Products
@@ -68,6 +70,7 @@ const routes = [
             { path: 'workouts',    name: 'Workouts',      component: Workouts },
             { path: 'workout/:id', name: 'WorkoutDetail', component: WorkoutDetail },
             { path: 'class/:id',   name: 'ClassDetail',   component: ClassDetail },
+            { path: 'classes',     name: 'Classes',       component: Classes },
             { path: 'bookings',    name: 'Bookings',      component: Bookings },
             { path: 'orders',      name: 'Orders',        component: Orders },
             { path: 'order/:id',   name: 'OrderDetail',   component: OrderDetail },
@@ -103,6 +106,7 @@ const routes = [
             { path: 'products',     name: 'AdminProducts',    component: AdminProducts },
             { path: 'memberships',  name: 'AdminMemberships', component: AdminMemberships },
             { path: 'orders',       name: 'AdminOrders',      component: AdminOrders },
+            {path: 'payments',      name: 'AdminPayments',    component: AdminPayments },
             { path: 'reviews',      name: 'AdminReviews',     component: AdminReviews }
         ]
     },

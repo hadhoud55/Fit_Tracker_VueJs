@@ -1,6 +1,13 @@
 import axios from './axios';
 
 const ReviewService = {
+
+    getAll(page = 0, size = 10) {
+        return axios
+            .get('/reviews', { params: { page, size } })
+            .then(res => res.data);
+    },
+
     getForWorkout(workoutId, { page = 0, size = 10 } = {}) {
         return axios.get(`/reviews/workout/${workoutId}`, { params: { page, size } })
             .then(res => res.data);
@@ -16,8 +23,10 @@ const ReviewService = {
             .then(res => res.data);
     },
 
-    delete(reviewId) {
-        return axios.delete(`/reviews/${reviewId}`);
+    delete(reviewId, userId) {
+        return axios.delete(`/reviews/${reviewId}`, {
+            params: { userId }
+        });
     }
 };
 

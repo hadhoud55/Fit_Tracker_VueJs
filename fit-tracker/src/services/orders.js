@@ -45,5 +45,11 @@ export default {
         // hits PUT /api/orders/{id}/cancel (you'll need to add this endpoint in the backend)
         const res = await axios.put(`/orders/${id}/status`, { status: 'CANCELLED' });
         return res.data;
+    },
+
+    updateStatus(orderId, status) {
+        return axios
+            .put(`${API}/${orderId}/status`, { status })
+            .then(res => res.data);
     }
 };

@@ -82,14 +82,14 @@
       <div class="space-y-4">
         <p><strong>Category:</strong> {{ detail.category }}</p>
         <p><strong>Duration:</strong> {{ detail.durationInMinutes }} minutes</p>
-        <p><strong>Coach ID:</strong> {{ detail.coachId }}</p>
+        <p><strong>Coach:</strong> {{ detail.coachName || 'N/A' }}</p>
         <div class="flex space-x-2 overflow-x-auto">
           <img
               v-for="(u, i) in detail.imageUrls"
               :key="i"
               :src="u"
               class="w-32 h-32 object-cover rounded"
-          />
+              alt=""/>
         </div>
         <p v-if="detail.description">{{ detail.description }}</p>
       </div>
@@ -100,12 +100,12 @@
 <script>
 import debounce from 'lodash/debounce';
 import WorkoutForm from '@/components/admin/WorkoutForm.vue';
-import AdminWorkoutCard from '@/components/admin/WorkoutCardAdmin.vue';
+import AdminWorkoutCard from '@/components/admin/AdminWorkoutCard.vue';
 import Modal from '@/components/shared/Modal.vue';
 import WorkoutService from '@/services/workouts.js';
 
 export default {
-  components: { WorkoutForm, AdminWorkoutCard, Modal },
+  components: {WorkoutForm, AdminWorkoutCard: AdminWorkoutCard, Modal},
   data() {
     return {
       workouts: [],
@@ -147,7 +147,7 @@ export default {
       this.fetchDebounced();
     },
     openForm(w = null) {
-      this.selected = w ? { ...w } : null;
+      this.selected = w ? {...w} : null;
       this.showForm = true;
     },
     onSaved() {

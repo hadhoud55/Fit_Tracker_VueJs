@@ -57,6 +57,13 @@
             >
               Orders
             </router-link>
+            <router-link
+                to="/admin/payments"
+                class="block p-2 rounded hover:bg-accent"
+                active-class="bg-accent"
+            >
+              Payments
+            </router-link>
           </li>
           <li>
             <router-link
