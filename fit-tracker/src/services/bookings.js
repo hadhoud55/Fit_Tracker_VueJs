@@ -2,6 +2,7 @@ import axios from './axios';
 
 const BookingService = {
     async create(bookingData) {
+        // POST to /api/bookings
         const { data } = await axios.post('/bookings', bookingData);
         return data;
     },

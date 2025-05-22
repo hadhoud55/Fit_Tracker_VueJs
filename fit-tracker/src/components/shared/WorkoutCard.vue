@@ -10,13 +10,6 @@
     <div class="mt-4 flex justify-between items-center">
       <router-link
           :to="{ name: 'WorkoutDetail', params: { id: workout.id } }"
-          class="text-blue-500 hover:underline"
-      >
-        Details
-      </router-link>
-
-      <router-link
-          :to="{ name: 'WorkoutDetail', params: { id: workout.id } }"
           class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
       >
         View

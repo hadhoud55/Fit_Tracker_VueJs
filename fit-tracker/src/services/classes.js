@@ -1,8 +1,21 @@
 import axios from './axios';
 
 const ClassService = {
+    /**
+     * Fetch a paginated list of classes using the search endpoint
+     * with an empty keyword to get “all” classes.
+     */
+    async getClasses({ page = 0, size = 100 } = {}) {
+        const { data } = await axios.get('/classes/search', {
+            params: { keyword: '', page, size }
+        });
+        return data;
+    },
+
     async search({ keyword = '', page = 0, size = 10 } = {}) {
-        const { data } = await axios.get('/classes/search', { params: { keyword, page, size } });
+        const { data } = await axios.get('/classes/search', {
+            params: { keyword, page, size }
+        });
         return data;
     },
 
@@ -12,7 +25,9 @@ const ClassService = {
     },
 
     async getByCoach(coachId, { page = 0, size = 10 } = {}) {
-        const { data } = await axios.get(`/classes/by-coach/${coachId}`, { params: { page, size } });
+        const { data } = await axios.get(`/classes/by-coach/${coachId}`, {
+            params: { page, size }
+        });
         return data;
     },
 

@@ -51,6 +51,7 @@ export default {
     },
 
     getCoaches() {
-        return axios.get('/users/coaches').then(res => res.data);
-    }
+        return axios.get('/users/coaches')
+            .then(res => res.data);
+    },
 };

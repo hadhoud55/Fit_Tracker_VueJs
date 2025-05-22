@@ -1,13 +1,21 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-primary mb-6">My Bookings</h1>
-    <BookingForm v-if="showForm" :booking="selectedBooking" @submitted="fetchBookings" class="mb-6" />
+
+    <!-- BookingForm for create/edit -->
+    <BookingForm
+        v-if="showForm"
+        :booking="selectedBooking"
+        @submitted="fetchBookings"
+        class="mb-6"
+    />
+
+    <!-- List of bookings -->
     <BookingList
         :bookings="bookings"
         @edit="editBooking"
         @delete="deleteBooking"
     />
-    <Pagination :total-pages="totalPages" :current-page="currentPage" @page-changed="fetchBookings" />
   </div>
 </template>
 
@@ -15,29 +23,28 @@
 import BookingForm from '@/components/user/BookingForm.vue';
 import BookingList from '@/components/user/BookingList.vue';
 import BookingService from '@/services/bookings.js';
-import Pagination from "@/components/shared/Pagination.vue";
 
 export default {
-  components: {Pagination, BookingForm, BookingList },
+  components: {
+    BookingForm,
+    BookingList
+  },
   data() {
     return {
       bookings: [],
       showForm: false,
-      selectedBooking: null,
-      currentPage: 0,
-      totalPages: 0,
+      selectedBooking: null
     };
   },
   async created() {
-    await this.fetchBookings(0);
+    await this.fetchBookings();
   },
   methods: {
-    async fetchBookings(page) {
+    async fetchBookings() {
       try {
-        const response = await BookingService.getByUserId(this.$store.getters.userId, page, 10);
-        this.bookings = response.data.content;
-        this.totalPages = response.data.totalPages;
-        this.currentPage = page;
+        // fetch all bookings for current user
+        this.bookings = await BookingService.getByUser(this.$store.getters.userId);
+        // reset form state
         this.showForm = false;
         this.selectedBooking = null;
       } catch (error) {
@@ -52,11 +59,11 @@ export default {
       try {
         await BookingService.delete(id);
         this.$toast.success('Booking cancelled');
-        await this.fetchBookings(this.currentPage);
+        await this.fetchBookings();
       } catch (error) {
         this.$toast.error('Failed to cancel booking');
       }
-    },
-  },
+    }
+  }
 };
 </script>
