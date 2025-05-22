@@ -1,103 +1,142 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-primary mb-6">My Classes</h1>
-    <!-- Create Form -->
-    <div class="bg-white p-6 rounded shadow-md mb-8">
-      <h2 class="text-xl font-semibold mb-4">Add New Class</h2>
-      <ClassForm @class-created="fetchClasses" />
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-primary">My Classes</h2>
+      <button
+          class="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark"
+          @click="openAddModal"
+      >
+        Add Class
+      </button>
     </div>
-    <!-- Classes List -->
-    <div v-if="loading" class="text-center">Loading...</div>
-    <div v-else-if="error" class="text-red-500 text-center">{{ error }}</div>
-    <div v-else>
-      <MyClassesList :classes="classes.content" @edit-class="editClass" @delete-class="deleteClass" />
-      <Pagination
-          v-if="classes.totalPages > 1"
-          :total-pages="classes.totalPages"
-          :current-page="currentPage"
-          @page-change="changePage"
-      />
-    </div>
-    <!-- Edit Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white p-6 rounded shadow-md w-full max-w-lg">
-        <h2 class="text-xl font-semibold mb-4">Edit Class</h2>
-        <ClassForm :classData="editForm" @class-updated="handleClassUpdated" @cancel="showEditModal = false" />
-      </div>
-    </div>
+    <table class="w-full table-auto border border-gray-200" v-if="classes.length">
+      <thead class="bg-gray-100">
+      <tr>
+        <th class="px-4 py-2 border">Title</th>
+        <th class="px-4 py-2 border">Category</th>
+        <th class="px-4 py-2 border">Description</th>
+        <th class="px-4 py-2 border">Start Time</th>
+        <th class="px-4 py-2 border">End Time</th>
+        <th class="px-4 py-2 border">Duration</th>
+        <th class="px-4 py-2 border">Capacity</th>
+        <th class="px-4 py-2 border">Sessions</th>
+        <th class="px-4 py-2 border">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="cls in classes" :key="cls.id">
+        <td class="px-4 py-2 border">{{ cls.title }}</td>
+        <td class="px-4 py-2 border">{{ cls.category }}</td>
+        <td class="px-4 py-2 border">{{ cls.description }}</td>
+        <td class="px-4 py-2 border">{{ formatDate(cls.startTime) }}</td>
+        <td class="px-4 py-2 border">{{ formatDate(cls.endTime) }}</td>
+        <td class="px-4 py-2 border">{{ cls.durationInMinutes }} min</td>
+        <td class="px-4 py-2 border">{{ cls.capacity }}</td>
+        <td class="px-4 py-2 border">{{ cls.sessions?.length || 0 }}</td>
+        <td class="px-4 py-2 border">
+          <button
+              class="text-blue-600 hover:underline mr-2"
+              @click="openEditModal(cls)"
+          >Edit</button>
+          <button
+              class="text-red-600 hover:underline"
+              @click="deleteClass(cls.id)"
+          >Delete</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <p v-else class="text-gray-500">No classes found.</p>
+
+    <ClassEditModal
+        v-if="showModal"
+        :classItem="editingClass"
+        @close="closeModal"
+        @save="handleSave"
+    />
   </div>
 </template>
 
 <script>
 import ClassService from '@/services/classes.js';
-import MyClassesList from '@/components/coach/MyClassesList.vue';
-import ClassForm from '@/components/admin/ClassForm.vue';
-import Pagination from '@/components/shared/Pagination.vue';
-import { mapGetters } from 'vuex';
+import ClassEditModal from '@/components/coach/ClassEditModal.vue';
+import moment from 'moment-timezone'
 
 export default {
-  components: { MyClassesList, ClassForm, Pagination },
+  components: { ClassEditModal },
   data() {
     return {
-      classes: { content: [], totalPages: 0 },
-      currentPage: 0,
-      pageSize: 10,
-      loading: false,
-      error: null,
-      showEditModal: false,
-      editForm: null,
+      classes: [],
+      showModal: false,
+      editingClass: null
     };
   },
-  computed: {
-    ...mapGetters(['userId', 'userRole']),
-    isCoachOrAdmin() {
-      return ['COACH', 'ADMIN'].includes(this.userRole);
-    },
+  async created() {
+    await this.fetchClasses();
   },
   methods: {
     async fetchClasses() {
-      if (!this.isCoachOrAdmin) {
-        this.$toast.error('Unauthorized: Coach or Admin access required');
-        this.$router.push('/');
-        return;
-      }
-      this.loading = true;
-      this.error = null;
       try {
-        this.classes = await ClassService.getByCoach(this.userId, this.currentPage, this.pageSize);
+        const coachId = this.$store.getters.userId;
+        const response = await ClassService.getByCoach(coachId, { page: 0, size: 100 });
+        this.classes = response.content || [];
       } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to load classes';
-        this.$toast.error(this.error);
-      } finally {
-        this.loading = false;
+        this.$toast?.error?.('Failed to load classes') || alert('Failed to load classes');
       }
     },
-    async changePage(page) {
-      this.currentPage = page;
-      await this.fetchClasses();
+    formatDate(dateStr) {
+      if (!dateStr) return '';
+      return moment(dateStr).tz('Europe/London').format();
     },
-    editClass(gymClass) {
-      this.editForm = { ...gymClass, workoutIds: gymClass.workoutIds || [] };
-      this.showEditModal = true;
+    openAddModal() {
+      this.editingClass = null;
+      this.showModal = true;
     },
-    async deleteClass(id) {
-      if (!confirm('Are you sure you want to delete this class?')) return;
+    openEditModal(cls) {
+      this.editingClass = cls;
+      this.showModal = true;
+    },
+    closeModal() {
+      this.showModal = false;
+    },
+    async handleSave(form) {
       try {
-        await ClassService.delete(id);
-        this.$toast.success('Class deleted successfully');
+        const payload = {
+          ...form,
+          coachId: this.$store.getters.userId
+        };
+
+        if (payload.startTime) {
+          payload.startTime = moment(payload.startTime).format();
+        }
+        if (payload.endTime) {
+          payload.endTime = moment(payload.endTime).format();
+        }
+
+        if (this.editingClass) {
+          await ClassService.update(this.editingClass.id, payload);
+          this.$toast?.success?.('Class updated');
+        } else {
+          await ClassService.create(payload);
+          this.$toast?.success?.('Class added');
+        }
+        this.showModal = false;
         await this.fetchClasses();
       } catch (error) {
-        this.$toast.error(error.response?.data?.message || 'Failed to delete class');
+        this.$toast?.error?.('Failed to save class');
       }
     },
-    async handleClassUpdated() {
-      this.showEditModal = false;
-      this.$toast.success('Class updated successfully');
-      await this.fetchClasses();
-    },
-  },
-  created() {
-    this.fetchClasses();
-  },
+    async deleteClass(id) {
+      if (confirm('Are you sure you want to delete this class?')) {
+        try {
+          await ClassService.delete(id);
+          this.$toast?.success?.('Class deleted');
+          await this.fetchClasses();
+        } catch (error) {
+          this.$toast?.error?.('Failed to delete class');
+        }
+      }
+    }
+  }
 };
 </script>
